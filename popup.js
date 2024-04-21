@@ -107,12 +107,12 @@ function checkAuthenticity(url) {
     // Handle response from background script
     if(response != undefined && response != null && response.matches && response.matches.length > 0){
       console.log(response);
-      document.getElementById('safeBrowsingStatus').innerText = `\n The Website is not Google Safe Browsing Approved : \n Threat Type : ${response.matches[0].threatType}`;
+      document.getElementById('safeBrowsingStatus').innerText = `The Website is not Google Safe Browsing Approved : \n Threat Type : ${response.matches[0].threatType}`;
       document.getElementById('safeBrowsingStatus').style.color = 'red';
     }
     else{
-      document.getElementById('safeBrowsingStatus').innerText = `\n The Website is Google Safe Browsing Approved.`;
-      document.getElementById('safeBrowsingStatus').style.color = 'red';
+      document.getElementById('safeBrowsingStatus').innerText = `The Website is Google Safe Browsing Approved.`;
+      document.getElementById('safeBrowsingStatus').style.color = 'blueviolet';
     }
   });
 

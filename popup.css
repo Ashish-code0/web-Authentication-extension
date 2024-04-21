@@ -59,17 +59,29 @@ button:hover {
 #status {
   font-size: 16px;
   text-align: center;
-  color: red;
+  border: 2px solid rgb(56, 198, 136);
+  margin: 15px;
+  padding: 10px;
 }
 
 #safeBrowsingStatus{
   font-size: 20px;
   text-align: start;
   color: red;
+  border: 2px solid orangered;
+  margin: 15px;
+  padding: 10px;
 }
 
+#sslCertificateStatus{
+  margin: 15px;
+  border: 1px solid tomato;
+  padding: 10px;
+}
 #who-is-results{
-  
+  margin: 15px;
+  border: 1px solid rgb(145, 42, 255);
+  padding: 10px;
 }
 #checkCurrentTabButton {
   display: block;
