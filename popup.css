@@ -62,6 +62,15 @@ button:hover {
   color: red;
 }
 
+#safeBrowsingStatus{
+  font-size: 20px;
+  text-align: start;
+  color: red;
+}
+
+#who-is-results{
+  
+}
 #checkCurrentTabButton {
   display: block;
   margin: 0 auto;

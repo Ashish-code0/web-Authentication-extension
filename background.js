@@ -6,7 +6,6 @@ chrome.runtime.onInstalled.addListener(function () {
 // Listen for messages from the content scripts or popup
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
-  console.log("Called from cehckAuthenticity background.js");
   if (message.action === 'checkAuthenticity') {
     // Perform authenticity checks here
     const url = sender.tab.url;
@@ -18,20 +17,49 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 });
 
 
-// Example function to check if a URL uses HTTPS
-
-// Listen for messages from the popup script
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  console.log("Called form OnMessage")
-  if (message.action === 'checkUrlSafety') {
+
+  if (message.action === 'checkAuthenticity') {
+    // Perform authenticity checks here
+    const url = sender.tab.url;
+    const authenticityResult = checkAuthenticity(url);
+
+    // Send response back to the sender (content script or popup)
+    sendResponse({ result: authenticityResult });
+  }
+  else if (message.action === 'checkUrlSafety') {
     // Extract URL from the message
     const urlToCheck = message.url;
 
     // Call the checkUrlSafety function with the URL
-    checkUrlSafety(urlToCheck, function (result) {
-      // Send response back to the popup script
-      sendResponse(result);
-    });
+    checkUrlSafety(urlToCheck)
+      .then(result => {
+        // Send response back to the popup script
+        sendResponse(result);
+      })
+      .catch(error => {
+        console.error("Error checking URL safety:", error);
+        // Send an error response back to the popup script
+        sendResponse({ error: error.message });
+      });
+
+    // Return true to indicate that the response will be sent asynchronously
+    return true;
+  }
+  else if (message.action === 'analyzeWebsiteSecurity') {
+    // Extract domain from the message
+    const domain = message.domain;
+    // Call analyzeWebsiteSecurity function with the domain
+    analyzeWebsiteSecurity(domain)
+        .then(securityResult => {
+            // Send the array response back to the content script or popup
+            sendResponse(securityResult);
+        })
+        .catch(error => {
+            console.error("Error analyzing website security:", error);
+            // Send an error response back to the content script or popup
+            sendResponse({ error: error.message });
+        });
 
     // Return true to indicate that the response will be sent asynchronously
     return true;
@@ -39,12 +67,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 });
 
 
-
 // Function to check the safety of a URL using Google Safe Browsing API
 async function checkUrlSafety(url, callback) {
 
-  console.log("Called from checkUrlSafety");
-  console.log(`${url}`)
   const apiKey = 'AIzaSyA94auGHxIx0_84_8YyyYgvJ1IH96-98pQ';
   const apiUrl = 'https://safebrowsing.googleapis.com/v4/threatMatches:find';
 
@@ -70,28 +95,141 @@ async function checkUrlSafety(url, callback) {
       body: JSON.stringify(requestData)
     });
 
-    if (response && response.matches && response.matches.length > 0) {
-      // If matches are found, handle the security issue
-      console.log("Security issue detected for URL:", url);
-      response.matches.forEach(match => {
-        console.log("Threat type:", match.threatType);
-        console.log("Platform type:", match.platformType);
-        console.log("Threat entry type:", match.threatEntryType);
-      });
+    const responseData = await response.json();
+    
+     if (responseData && responseData.matches && responseData.matches.length > 0) {
+      console.log('running if in the checkUrl');
     } else {
       console.log("No security issues detected for URL:", url);
     }
+
+    return responseData;
   }
   catch (error) {
     console.error("Error checking URL safety:", error);
   }
 }
 
+// background.js
+async function fetchWhoisData(domain) {
+
+  const whoisApiKey = 'at_szLCZbg7vcBph9SxwjBu5VA0XyBWU';
+  const whoisApiUrl = `https://www.whoisxmlapi.com/whoisserver/WhoisService?domainName=${domain}&apiKey=${whoisApiKey}&outputFormat=json`;
+
+  try {
+      const response = await fetch(whoisApiUrl);
+      if (!response.ok) {
+          throw new Error('Network response was not ok');
+      }
+      return await response.json();
+  } catch (error) {
+      console.error('Error fetching WHOIS data:', error);
+      return null;
+  }
+}
+
+
+async function analyzeWebsiteSecurity(domain) {
+  try {
+
+      // Call fetchWhoisData to retrieve WHOIS data
+      const whoisData = await fetchWhoisData(domain);
+      let safetyReasons = [];
+
+      // Check if WHOIS data is available
+      if (whoisData) {
+          // Extract relevant information from the WHOIS data
+          const registrationDate = whoisData.WhoisRecord.registryData.creationDate;
+          const registrar = whoisData.WhoisRecord.registrarName;
+          const location = whoisData.WhoisRecord.registrantCountry;
+
+          // Perform safety analysis based on extracted information
+          let isSafe = true;
+          
+
+          // Check registration date
+          const currentDate = new Date();
+          const registrationDateTime = new Date(registrationDate);
+          const registrationAgeInDays = Math.floor((currentDate - registrationDateTime) / (1000 * 60 * 60 * 24));
+
+          if(registrationDate === undefined){
+              isSafe = false;
+              safetyReasons.push('The website has no creation date in whois details.');
+          }
+          else if (registrationAgeInDays < 30) { // Adjust threshold as needed
+              isSafe = false;
+              safetyReasons.push('The website is newly registered.');
+          }
+
+          if(registrar === undefined){
+            isSafe = false;
+            safetyReasons.push('The registrar information was not found.')
+          }
+          else if(registrar != undefined && registrar.toLowerCase().includes('suspicious')){
+             // Adjust criteria based on known bad registrars
+              isSafe = false;
+              safetyReasons.push('The registrar is associated with suspicious activity.');
+          }
+          
+          if(location === undefined){
+              isSafe = false;
+              safetyReasons.push('The registrant country is not known or is undefined in who is details. ');
+          }
+          else if (location === 'High Risk Country') { // Adjust criteria based on known high-risk countries
+              isSafe = false;
+              safetyReasons.push('The registrant country is considered high risk.');
+          }
+          // Console alert based on safety analysis
+          if (isSafe) {
+              console.log('The website appears to be safe to use.');
+          } 
+          else {
+              console.log('Warning: The website may not be safe to use. Reasons:');
+              safetyReasons.forEach(reason => {
+                  console.log('- ' + reason);
+              });
+          }
+      } else {
+          console.error('WHOIS data not available');
+          // Handle the case where WHOIS data is not available
+      }
+
+      return safetyReasons;
+  } catch (error) {
+      console.error('Error analyzing website security:', error);
+      
+  }
+}
+
+chrome.webRequest.onCompleted.addListener(
+  function(details) {
+    if (details.type === "main_frame") {
+      console.log("Page loaded:", details.url);
+      console.log("SSL certificate:", details.securityInfo.certificates);
+      // Implement SSL certificate validation logic here
+    }
+  },
+  { urls: ["<all_urls>"] },
+  ["responseHeaders"]
+);
+
+
+chrome.webRequest.onCompleted.addListener(
+  function(details) {
+    if (details.type === "main_frame") {
+      console.log("Page loaded:", details.url);
+      console.log("SSL certificate:", details.securityInfo.certificates);
+      // Implement SSL certificate validation logic here
+    }
+  },
+  { urls: ["<all_urls>"] },
+  ["responseHeaders"]
+);
+
 
 
 
 function isHTTPS(url) {
-  console.log("Called from isHTTPS");
   return url.startsWith('https://');
 }
 

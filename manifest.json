@@ -3,7 +3,8 @@
     "name": "Web-Secure",
     "version": "1.0",
     "description": "A Chrome extension to check the authenticity of websites.",
-    "permissions": ["activeTab", "webNavigation", "webRequest", "webRequestBlocking", "identity", "storage", "contextMenus", "notifications"],
+    "permissions": ["activeTab", "webNavigation", "webRequest", "webRequestBlocking", "identity", "storage", "contextMenus", "notifications", "tabs", "http://*/*",
+    "https://*/*"],
     "background": {
       "service_worker": "background.js"
     },
