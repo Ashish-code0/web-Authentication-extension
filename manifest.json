@@ -5,6 +5,12 @@
     "description": "A Chrome extension to check the authenticity of websites.",
     "permissions": ["activeTab", "webNavigation", "webRequest", "webRequestBlocking", "identity", "storage", "contextMenus", "notifications", "tabs", "http://*/*",
     "https://*/*"],
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],  
+        "js": ["contentScript.js"]  
+      }
+    ],
     "background": {
       "service_worker": "background.js"
     },
