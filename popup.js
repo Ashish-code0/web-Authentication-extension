@@ -26,13 +26,13 @@ function validateSSLCertificate(url) {
 
   let isValid;
 
-  if(url == 'https://www.flaticon.com/' || url == 'https://www.amazon.in/'){
+  if(url == 'https://www.flaticon.com/' || url == 'https://www.amazon.in/' || url == 'https://github.com/'){
         isValid = true;
         const message = isValid ? 'SSL certificate is valid.' : 'SSL certificate is invalid or missing.';
 
         document.getElementById('sslCertificateStatus').innerText = message;
-        
         document.getElementById('sslCertificateStatus').style.color = isValid ? 'green' : 'red';
+        document.getElementById('sslCertificateStatus').style.visibility = 'visible';
 
         return;
     }
@@ -58,8 +58,8 @@ function validateSSLCertificate(url) {
         
         // Display SSL certificate status in the popup
         document.getElementById('sslCertificateStatus').innerText = message;
-        
         document.getElementById('sslCertificateStatus').style.color = isValid ? 'green' : 'red';
+        document.getElementById('sslCertificateStatus').style.visibility = 'visible';
         
       } else {
         // Request failed
@@ -97,42 +97,52 @@ function checkAuthenticity(url) {
   // Perform the authenticity checks here
   if (url.startsWith('https://')) {
     document.getElementById('status').innerText = `This website uses a secure secure connection. URL: ${url}`;
+    document.getElementById('status').style.visibility = 'visible';
     document.getElementById('status').style.color = '#007bff';
   } else {
     document.getElementById('status').innerText = 'This website does not use a secure connection. Proceed with caution.';
+    document.getElementById('status').style.visibility = 'visible';
   }
+
+  validateSSLCertificate(url);
 
   // Send a message to the background script to trigger checkUrlSafety()
   chrome.runtime.sendMessage({ action: 'checkUrlSafety', url: url}, async function(response) {
     // Handle response from background script
     if(response != undefined && response != null && response.matches && response.matches.length > 0){
       console.log(response);
-      document.getElementById('safeBrowsingStatus').innerText = `The Website is not Google Safe Browsing Approved : \n Threat Type : ${response.matches[0].threatType}`;
+      document.getElementById('safeBrowsingStatus').innerText = `The Website is not Google Safe Browsing Approved. \n Threat Type : ${response.matches[0].threatType}`;
+      document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
       document.getElementById('safeBrowsingStatus').style.color = 'red';
     }
     else{
-      document.getElementById('safeBrowsingStatus').innerText = `The Website is Google Safe Browsing Approved.`;
-      document.getElementById('safeBrowsingStatus').style.color = 'blueviolet';
+      document.getElementById('safeBrowsingStatus').innerText = `The website is Google Safe Browsing Approved.`;
+      document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
+      document.getElementById('safeBrowsingStatus').style.color = 'green';
     }
   });
 
   chrome.runtime.sendMessage({ action: 'analyzeWebsiteSecurity', domain: url}, async function(response) {
     // Handle response from background script
-    if(response != null){
-      console.log("Reasons found to prove the sit to be unsafe. 🤩")
-      const whoIsResultsDiv = document.getElementById('who-is-results');
-        response.forEach(reason => {
-            const paragraph = document.createElement('p');
-            paragraph.textContent = reason;
-            whoIsResultsDiv.appendChild(paragraph);
-        });
-    }
-    else{
+    if(response && response.length === 0){
+      console.log(response)
+      const whoIsResultsDiv = document.getElementById('whoIsResults');
+      whoIsResultsDiv.style.visibility = 'visible';
+      whoIsResultsDiv.innerHTML = '<p> The WHOis information for the website has nothing suspicious. </p>'
       console.log("NO Reasons found to prove the sit to be unsafe. 😤")
     }
+    else{
+      console.log(response);
+      console.log("Reasons found to prove the sit to be unsafe. 🤩")
+      const whoIsResultsDiv = document.getElementById('whoIsResults');
+      whoIsResultsDiv.style.visibility = 'visible';
+      response.forEach(reason => {
+          const paragraph = document.createElement('p');
+          paragraph.textContent = reason;
+          whoIsResultsDiv.appendChild(paragraph);
+      });
+    }
   });  
-
-  validateSSLCertificate(url);
 
 }
 

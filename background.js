@@ -134,65 +134,86 @@ async function analyzeWebsiteSecurity(domain) {
 
       // Call fetchWhoisData to retrieve WHOIS data
       const whoisData = await fetchWhoisData(domain);
+      console.log("Line no: 1 analyzeWebsiteSecurity")
       let safetyReasons = [];
 
+      console.log("Line no: 2 analyzeWebsiteSecurity")
       // Check if WHOIS data is available
       if (whoisData) {
           // Extract relevant information from the WHOIS data
-          const registrationDate = whoisData.WhoisRecord.registryData.creationDate;
+          const registrationDate = whoisData.WhoisRecord.createdDate;
+          console.log("Line no: 3 analyzeWebsiteSecurity")
+          console.log(`Registration Date : ${registrationDate}`);
           const registrar = whoisData.WhoisRecord.registrarName;
+          console.log("Line no: 4 analyzeWebsiteSecurity")
           const location = whoisData.WhoisRecord.registrantCountry;
+          console.log("Line no: 5 analyzeWebsiteSecurity")
+          console.log(`Registrant Country : ${location}`)
 
           // Perform safety analysis based on extracted information
           let isSafe = true;
+          console.log("Line no: 6 analyzeWebsiteSecurity")
           
 
           // Check registration date
           const currentDate = new Date();
+          console.log("Line no: 7 analyzeWebsiteSecurity")
           const registrationDateTime = new Date(registrationDate);
+          console.log("Line no: 8 analyzeWebsiteSecurity")
           const registrationAgeInDays = Math.floor((currentDate - registrationDateTime) / (1000 * 60 * 60 * 24));
-
+          console.log("Line no: 9 analyzeWebsiteSecurity")
           if(registrationDate === undefined){
               isSafe = false;
               safetyReasons.push('The website has no creation date in whois details.');
+              console.log("Line no: 10 analyzeWebsiteSecurity")
           }
           else if (registrationAgeInDays < 30) { // Adjust threshold as needed
               isSafe = false;
               safetyReasons.push('The website is newly registered.');
+              console.log("Line no: 11 analyzeWebsiteSecurity")
           }
 
           if(registrar === undefined){
             isSafe = false;
             safetyReasons.push('The registrar information was not found.')
+            console.log("Line no: 12 analyzeWebsiteSecurity")
           }
           else if(registrar != undefined && registrar.toLowerCase().includes('suspicious')){
              // Adjust criteria based on known bad registrars
               isSafe = false;
               safetyReasons.push('The registrar is associated with suspicious activity.');
+              console.log("Line no: 13 analyzeWebsiteSecurity")
           }
           
           if(location === undefined){
               isSafe = false;
               safetyReasons.push('The registrant country is not known or is undefined in who is details. ');
+              console.log("Line no: 14 analyzeWebsiteSecurity")
           }
           else if (location === 'High Risk Country') { // Adjust criteria based on known high-risk countries
               isSafe = false;
               safetyReasons.push('The registrant country is considered high risk.');
+              console.log("Line no: 15 analyzeWebsiteSecurity")
           }
           // Console alert based on safety analysis
           if (isSafe) {
               console.log('The website appears to be safe to use.');
+              console.log("Line no: 16 analyzeWebsiteSecurity")
           } 
           else {
               console.log('Warning: The website may not be safe to use. Reasons:');
+              console.log("Line no: 17 analyzeWebsiteSecurity")
               safetyReasons.forEach(reason => {
                   console.log('- ' + reason);
               });
           }
       } else {
           console.error('WHOIS data not available');
+          console.log("Line no: 18 analyzeWebsiteSecurity")
           // Handle the case where WHOIS data is not available
       }
+
+      console.log("Line no: 19 analyzeWebsiteSecurity")
 
       return safetyReasons;
   } catch (error) {
