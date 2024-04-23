@@ -31,7 +31,7 @@ function validateSSLCertificate(url) {
         const message = isValid ? 'SSL certificate is valid.' : 'SSL certificate is invalid or missing.';
 
         document.getElementById('sslCertificateStatus').innerText = message;
-        document.getElementById('sslCertificateStatus').style.color = isValid ? 'green' : 'red';
+        document.getElementById('sslCertificateStatus').style.color = isValid ? '#007bff' : 'red';
         document.getElementById('sslCertificateStatus').style.visibility = 'visible';
 
         return;
@@ -58,7 +58,7 @@ function validateSSLCertificate(url) {
         
         // Display SSL certificate status in the popup
         document.getElementById('sslCertificateStatus').innerText = message;
-        document.getElementById('sslCertificateStatus').style.color = isValid ? 'green' : 'red';
+        document.getElementById('sslCertificateStatus').style.color = isValid ? '#007bff' : 'red';
         document.getElementById('sslCertificateStatus').style.visibility = 'visible';
         
       } else {
@@ -111,12 +111,12 @@ function checkAuthenticity(url) {
     // Handle response from background script
     if(response != undefined && response != null && response.matches && response.matches.length > 0){
       console.log(response);
-      document.getElementById('safeBrowsingStatus').innerText = `The Website is not Google Safe Browsing Approved. \n Threat Type : ${response.matches[0].threatType}`;
+      document.getElementById('safeBrowsingStatus').innerText = `Reputation Score is Bad \n Threat Type : ${response.matches[0].threatType}`;
       document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
       document.getElementById('safeBrowsingStatus').style.color = 'red';
     }
     else{
-      document.getElementById('safeBrowsingStatus').innerText = `The website is Google Safe Browsing Approved.`;
+      document.getElementById('safeBrowsingStatus').innerText = `Reputation Score is Good`;
       document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
       document.getElementById('safeBrowsingStatus').style.color = 'green';
     }
@@ -124,22 +124,32 @@ function checkAuthenticity(url) {
 
   chrome.runtime.sendMessage({ action: 'analyzeWebsiteSecurity', domain: url}, async function(response) {
     // Handle response from background script
-    if(response && response.length === 0){
+    if(response && response.length === 0 || response.length ===1){
       console.log(response)
       const whoIsResultsDiv = document.getElementById('whoIsResults');
       whoIsResultsDiv.style.visibility = 'visible';
-      whoIsResultsDiv.innerHTML = '<p> The WHOis information for the website has nothing suspicious. </p>'
+      whoIsResultsDiv.innerHTML = '<p> The WHOis information for the website has nothing suspicious. </p>';
+      document.getElementById('whoIsContainer').style.visibility = 'visible'
       console.log("NO Reasons found to prove the sit to be unsafe. 😤")
     }
     else{
       console.log(response);
       console.log("Reasons found to prove the sit to be unsafe. 🤩")
       const whoIsResultsDiv = document.getElementById('whoIsResults');
+      document.getElementById('whoIsContainer').style.visibility = 'visible'
+      
       whoIsResultsDiv.style.visibility = 'visible';
       response.forEach(reason => {
           const paragraph = document.createElement('p');
           paragraph.textContent = reason;
           whoIsResultsDiv.appendChild(paragraph);
+      });
+      const paragraphs = whoIsResultsDiv.querySelectorAll("p");
+
+      // Change the color of each <p> element
+      paragraphs.forEach(paragraph => {
+          paragraph.style.color = "red";
+          paragraph.style.backgroundColor = "#ffe8e8";
       });
     }
   });  
