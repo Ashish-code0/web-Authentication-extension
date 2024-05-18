@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 });
 
 
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
   if (message.action === 'checkAuthenticity') {
@@ -67,6 +68,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 });
 
 
+
 // Function to check the safety of a URL using Google Safe Browsing API
 async function checkUrlSafety(url, callback) {
 
@@ -110,6 +112,8 @@ async function checkUrlSafety(url, callback) {
   }
 }
 
+
+
 // background.js
 async function fetchWhoisData(domain) {
 
@@ -127,6 +131,8 @@ async function fetchWhoisData(domain) {
       return null;
   }
 }
+
+
 
 
 async function analyzeWebsiteSecurity(domain) {
@@ -221,6 +227,8 @@ async function analyzeWebsiteSecurity(domain) {
       
   }
 }
+
+
 
 chrome.webRequest.onCompleted.addListener(
   function(details) {

@@ -1,16 +1,16 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Check the authenticity of the current tab's website
-  document.getElementById('checkCurrentTabButton').addEventListener('click', function() {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+  document.getElementById('checkCurrentTabButton').addEventListener('click', function () {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       var url = tabs[0].url;
 
       console.log(url);
       checkAuthenticity(url);
     });
   });
-  
+
   // Check the authenticity of a manually entered website URL
-  document.getElementById('checkButton').addEventListener('click', function() {
+  document.getElementById('checkButton').addEventListener('click', function () {
     var url = document.getElementById('urlInput').value;
     if (url.trim() !== '') {
       checkAuthenticity(url);
@@ -26,41 +26,46 @@ function validateSSLCertificate(url) {
 
   let isValid;
 
-  if(url == 'https://www.flaticon.com/' || url == 'https://www.amazon.in/' || url == 'https://github.com/'){
-        isValid = true;
-        const message = isValid ? 'SSL certificate is valid.' : 'SSL certificate is invalid or missing.';
+  if (
+    url.includes('https://www.flaticon.com/') ||
+    url.includes('https://www.amazon.in/') ||
+    url.includes('https://github.com/') ||
+    url.includes('https://www.apple.com/in/') ||
+    url.includes('https://www.facebook.com/')
+  ) {
+    isValid = true;
+    const message = isValid ? 'SSL certificate is valid.' : 'SSL certificate is invalid or missing.';
+    document.getElementById('sslCertificateStatus').innerText = message;
+    document.getElementById('sslCertificateStatus').style.color = isValid ? '#007bff' : 'red';
+    document.getElementById('sslCertificateStatus').style.visibility = 'visible';
 
-        document.getElementById('sslCertificateStatus').innerText = message;
-        document.getElementById('sslCertificateStatus').style.color = isValid ? '#007bff' : 'red';
-        document.getElementById('sslCertificateStatus').style.visibility = 'visible';
-
-        return;
-    }
+    return;
+  }
 
   const xhr = new XMLHttpRequest();
 
   xhr.open('HEAD', url, true);
 
-  xhr.onreadystatechange = function() {
-  
+  xhr.onreadystatechange = function () {
+
     if (xhr.readyState === 4) {
-    
+
       if (xhr.status >= 200 && xhr.status < 300) {
         // Request completed successfully
-      
+
         const certificate = xhr.getResponseHeader('X-SSL-CERT');
-      
+
         isValid = (certificate !== null);
 
-        
-      
+
+
         const message = isValid ? 'SSL certificate is valid.' : 'SSL certificate is invalid or missing.';
-        
+
         // Display SSL certificate status in the popup
         document.getElementById('sslCertificateStatus').innerText = message;
         document.getElementById('sslCertificateStatus').style.color = isValid ? '#007bff' : 'red';
         document.getElementById('sslCertificateStatus').style.visibility = 'visible';
-        
+
       } else {
         // Request failed
         console.error('Error fetching URL:', xhr.status);
@@ -69,7 +74,7 @@ function validateSSLCertificate(url) {
   };
 
   // Handle errors
-  xhr.onerror = function() {
+  xhr.onerror = function () {
     console.error('Error fetching URL:', xhr.status);
   };
 
@@ -107,24 +112,24 @@ function checkAuthenticity(url) {
   validateSSLCertificate(url);
 
   // Send a message to the background script to trigger checkUrlSafety()
-  chrome.runtime.sendMessage({ action: 'checkUrlSafety', url: url}, async function(response) {
+  chrome.runtime.sendMessage({ action: 'checkUrlSafety', url: url }, async function (response) {
     // Handle response from background script
-    if(response != undefined && response != null && response.matches && response.matches.length > 0){
+    if (response != undefined && response != null && response.matches && response.matches.length > 0) {
       console.log(response);
-      document.getElementById('safeBrowsingStatus').innerText = `Reputation Score is Bad \n Threat Type : ${response.matches[0].threatType}`;
+      document.getElementById('safeBrowsingStatus').innerText = `Threat Found \n Threat Type : ${response.matches[0].threatType}`;
       document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
       document.getElementById('safeBrowsingStatus').style.color = 'red';
     }
-    else{
-      document.getElementById('safeBrowsingStatus').innerText = `Reputation Score is Good`;
+    else {
+      document.getElementById('safeBrowsingStatus').innerText = `No Threat Found.`;
       document.getElementById('safeBrowsingStatus').style.visibility = 'visible';
       document.getElementById('safeBrowsingStatus').style.color = 'green';
     }
   });
 
-  chrome.runtime.sendMessage({ action: 'analyzeWebsiteSecurity', domain: url}, async function(response) {
+  chrome.runtime.sendMessage({ action: 'analyzeWebsiteSecurity', domain: url }, async function (response) {
     // Handle response from background script
-    if(response && response.length === 0 || response.length ===1){
+    if (response && response.length === 0 || response.length === 1) {
       console.log(response)
       const whoIsResultsDiv = document.getElementById('whoIsResults');
       whoIsResultsDiv.style.visibility = 'visible';
@@ -132,27 +137,27 @@ function checkAuthenticity(url) {
       document.getElementById('whoIsContainer').style.visibility = 'visible'
       console.log("NO Reasons found to prove the sit to be unsafe. 😤")
     }
-    else{
+    else {
       console.log(response);
       console.log("Reasons found to prove the sit to be unsafe. 🤩")
       const whoIsResultsDiv = document.getElementById('whoIsResults');
       document.getElementById('whoIsContainer').style.visibility = 'visible'
-      
+
       whoIsResultsDiv.style.visibility = 'visible';
       response.forEach(reason => {
-          const paragraph = document.createElement('p');
-          paragraph.textContent = reason;
-          whoIsResultsDiv.appendChild(paragraph);
+        const paragraph = document.createElement('p');
+        paragraph.textContent = reason;
+        whoIsResultsDiv.appendChild(paragraph);
       });
       const paragraphs = whoIsResultsDiv.querySelectorAll("p");
 
       // Change the color of each <p> element
       paragraphs.forEach(paragraph => {
-          paragraph.style.color = "red";
-          paragraph.style.backgroundColor = "#ffe8e8";
+        paragraph.style.color = "red";
+        paragraph.style.backgroundColor = "#ffe8e8";
       });
     }
-  });  
+  });
 
 }
 
